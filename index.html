@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS | Ocean Telemetry</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        :root {
+            --bg-dark: #020617;
+            --glass-bg: rgba(15, 23, 42, 0.6);
+            --glass-border: rgba(0, 240, 255, 0.15);
+            --cyan-neon: #00f0ff;
+            --coral-neon: #ff0055;
+            --green-neon: #10b981;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0; font-family: 'Inter', sans-serif; background-color: var(--bg-dark);
+            color: var(--text-main); height: 100vh; display: flex; overflow: hidden;
+            background: radial-gradient(circle at 50% 0%, #0f172a 0%, #020617 100%);
+        }
+
+        .ambient-glow {
+            position: absolute; top: -20%; left: -10%; width: 50vw; height: 50vw;
+            background: radial-gradient(circle, rgba(0,240,255,0.05) 0%, transparent 70%);
+            animation: breathe 8s infinite alternate ease-in-out; pointer-events: none; z-index: 0;
+        }
+
+        @keyframes breathe {
+            0% { transform: scale(1); opacity: 0.5; }
+            100% { transform: scale(1.2); opacity: 1; }
+        }
+
+        .sidebar {
+            width: 280px; background: var(--glass-bg); backdrop-filter: blur(16px);
+            border-right: 1px solid var(--glass-border); display: flex; flex-direction: column; z-index: 10;
+        }
+
+        .brand {
+            padding: 30px 20px; font-size: 1.5rem; font-weight: 800; letter-spacing: 2px;
+            color: var(--text-main); border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; gap: 15px;
+        }
+
+        .brand i { color: var(--cyan-neon); text-shadow: 0 0 10px var(--cyan-neon); }
+
+        .nav-btn {
+            background: transparent; border: none; color: var(--text-muted); padding: 20px 30px;
+            text-align: left; font-size: 1rem; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; position: relative; display: flex; align-items: center; gap: 15px;
+        }
+
+        .nav-btn:hover, .nav-btn.active { color: var(--cyan-neon); background: rgba(0, 240, 255, 0.05); }
+        .nav-btn.active::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: var(--cyan-neon); box-shadow: 0 0 15px var(--cyan-neon); }
+
+        .dashboard { flex: 1; padding: 40px; overflow-y: auto; z-index: 10; position: relative; }
+        .page { display: none; opacity: 0; transition: opacity 0.5s; }
+        .page.active { display: block; opacity: 1; }
+
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
+        .header-top h1 { margin: 0; font-weight: 300; font-size: 2rem; }
+        .header-top h1 span { font-weight: 800; color: var(--cyan-neon); }
+
+        .live-status { display: flex; align-items: center; gap: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: var(--green-neon); background: rgba(16, 185, 129, 0.1); padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .pulse-dot { width: 8px; height: 8px; background: var(--green-neon); border-radius: 50%; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px; }
+
+        .glass-card { background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 25px; position: relative; transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; }
+        .glass-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0, 240, 255, 0.1); border-color: var(--cyan-neon); }
+
+        .card-icon { font-size: 2rem; color: var(--text-muted); margin-bottom: 20px; transition: 0.3s; }
+        .glass-card:hover .card-icon { color: var(--cyan-neon); text-shadow: 0 0 15px var(--cyan-neon); }
+
+        .card-title { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 10px; }
+        .data-value { font-family: 'JetBrains Mono', monospace; font-size: 2.5rem; font-weight: 700; color: var(--text-main); transition: color 0.3s; }
+        .data-unit { font-size: 1rem; color: var(--text-muted); font-weight: 400; }
+
+        .compass-wrapper { position: absolute; top: 25px; right: 25px; width: 50px; height: 50px; border: 2px solid var(--glass-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .compass-arrow { color: var(--coral-neon); font-size: 1.5rem; transition: transform 1s cubic-bezier(0.4, 2.5, 0.2, 1); }
+
+        @keyframes dataUpdate { 0% { color: var(--cyan-neon); text-shadow: 0 0 10px var(--cyan-neon); } 100% { color: var(--text-main); text-shadow: none; } }
+        .updated { animation: dataUpdate 1s ease-out; }
+
+        .chart-panel { grid-column: 1 / -1; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 30px; margin-top: 25px; height: 400px; }
+    </style>
+</head>
+<body>
+    <div class="ambient-glow"></div>
+    <aside class="sidebar">
+        <div class="brand"><i class="fa-solid fa-satellite-dish"></i> NEXUS</div>
+        <button class="nav-btn active" onclick="switchTab('live', this)"><i class="fa-solid fa-layer-group"></i> Telemetry</button>
+        <button class="nav-btn" onclick="switchTab('analytics', this)"><i class="fa-solid fa-chart-area"></i> Deep Analytics</button>
+    </aside>
+
+    <main class="dashboard">
+        <div id="page-live" class="page active">
+            <div class="header-top">
+                <h1>Ocean <span>Telemetry</span></h1>
+                <div class="live-status"><div class="pulse-dot"></div> SYNC: LIVE</div>
+            </div>
+
+            <div class="grid">
+                <div class="glass-card">
+                    <i class="fa-solid fa-temperature-water card-icon"></i>
+                    <div class="card-title">Water Temp</div>
+                    <div class="data-value" id="val-water">22.50<span class="data-unit">°C</span></div>
+                </div>
+                <div class="glass-card">
+                    <i class="fa-solid fa-droplet card-icon"></i>
+                    <div class="card-title">Clarity (ADC)</div>
+                    <div class="data-value" id="val-turbidity">650<span class="data-unit"></span></div>
+                </div>
+                <div class="glass-card">
+                    <i class="fa-solid fa-wind card-icon"></i>
+                    <div class="card-title">Atmosphere Temp</div>
+                    <div class="data-value" id="val-air">24.10<span class="data-unit">°C</span></div>
+                </div>
+                <div class="glass-card">
+                    <i class="fa-solid fa-gauge card-icon"></i>
+                    <div class="card-title">Barometric</div>
+                    <div class="data-value" id="val-pressure">1013.2<span class="data-unit"> hPa</span></div>
+                </div>
+                <div class="glass-card">
+                    <div class="card-title">Vector Heading</div>
+                    <div class="data-value" id="val-heading">185<span class="data-unit">°</span></div>
+                    <div class="compass-wrapper"><i id="compass-arrow" class="fa-solid fa-location-arrow compass-arrow" style="transform: rotate(185deg);"></i></div>
+                </div>
+            </div>
+            
+            <div class="chart-panel"><canvas id="liveChart"></canvas></div>
+        </div>
+
+        <div id="page-analytics" class="page">
+            <div class="header-top"><h1>Historical <span>Analytics</span></h1></div>
+            <div class="glass-card" style="height: 60vh; display:flex; align-items:center; justify-content:center; color: var(--text-muted);">
+                <div style="text-align: center;">
+                    <i class="fa-solid fa-database" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                    <h2>Firebase Connection Required</h2>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function switchTab(pageId, btnElement) {
+            document.querySelectorAll('.page').forEach(page => page.classList.remove('active'));
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('page-' + pageId).classList.add('active');
+            if(btnElement) btnElement.classList.add('active');
+        }
+
+        const ctx = document.getElementById('liveChart').getContext('2d');
+        let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(0, 240, 255, 0.4)');
+        gradient.addColorStop(1, 'rgba(0, 240, 255, 0.0)');
+
+        const liveChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['-60s', '-50s', '-40s', '-30s', '-20s', '-10s', 'NOW'],
+                datasets: [{
+                    label: 'Water Temp Volatility',
+                    data: [22.5, 22.5, 22.6, 22.4, 22.5, 22.5, 22.5],
+                    borderColor: '#00f0ff', backgroundColor: gradient, borderWidth: 2,
+                    pointBackgroundColor: '#020617', pointBorderColor: '#00f0ff', pointBorderWidth: 2,
+                    pointRadius: 4, fill: true, tension: 0.4
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 21, max: 24 } } }
+        });
+
+        let baseWaterTemp = 22.50, baseAirTemp = 24.10, baseHeading = 185, basePressure = 1013.2;
+
+        function simulateHardwareData() {
+            let wTemp = (baseWaterTemp + (Math.random() * 0.2 - 0.1)).toFixed(2);
+            let aTemp = (baseAirTemp + (Math.random() * 0.2 - 0.1)).toFixed(2);
+            let press = (basePressure + (Math.random() * 0.4 - 0.2)).toFixed(1);
+            let head = Math.floor(baseHeading + (Math.random() * 4 - 2));
+
+            updateElement('val-water', wTemp, '°C');
+            updateElement('val-air', aTemp, '°C');
+            updateElement('val-pressure', press, ' hPa');
+            
+            document.getElementById('val-heading').innerHTML = head + '<span class="data-unit">°</span>';
+            document.getElementById('compass-arrow').style.transform = `rotate(${head}deg)`;
+
+            liveChart.data.datasets[0].data.shift();
+            liveChart.data.datasets[0].data.push(wTemp);
+            liveChart.update('none');
+        }
+
+        function updateElement(id, value, unit) {
+            const el = document.getElementById(id);
+            el.innerHTML = value + '<span class="data-unit">' + unit + '</span>';
+            el.classList.remove('updated'); void el.offsetWidth; el.classList.add('updated');
+        }
+
+        setInterval(simulateHardwareData, 2000);
+    </script>
+</body>
+</html>

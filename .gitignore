@@ -1,0 +1,19 @@
+# Arduino build output
+*.hex
+*.elf
+*.bin
+build/
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Node / Python temporary
+node_modules/
+__pycache__/
+*.pyc
