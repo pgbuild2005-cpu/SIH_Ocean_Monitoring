@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEXUS | Ocean Telemetry</title>
+    <title>NEXUS | Ocean Telemetry & Optical Node</title>
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -13,11 +13,12 @@
 
         :root {
             --bg-dark: #020617;
-            --glass-bg: rgba(15, 23, 42, 0.6);
-            --glass-border: rgba(0, 240, 255, 0.15);
+            --glass-bg: rgba(15, 23, 42, 0.7);
+            --glass-border: rgba(0, 240, 255, 0.18);
             --cyan-neon: #00f0ff;
             --coral-neon: #ff0055;
             --green-neon: #10b981;
+            --amber-neon: #f59e0b;
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
         }
@@ -54,45 +55,121 @@
         .brand i { color: var(--cyan-neon); text-shadow: 0 0 10px var(--cyan-neon); }
 
         .nav-btn {
-            background: transparent; border: none; color: var(--text-muted); padding: 20px 30px;
-            text-align: left; font-size: 1rem; font-weight: 600; cursor: pointer;
-            transition: all 0.3s; position: relative; display: flex; align-items: center; gap: 15px;
+            background: transparent; border: none; color: var(--text-muted); padding: 18px 25px;
+            text-align: left; font-size: 0.95rem; font-weight: 600; cursor: pointer;
+            transition: all 0.3s; position: relative; display: flex; align-items: center; gap: 12px;
         }
 
         .nav-btn:hover, .nav-btn.active { color: var(--cyan-neon); background: rgba(0, 240, 255, 0.05); }
         .nav-btn.active::before { content: ''; position: absolute; left: 0; top: 0; height: 100%; width: 4px; background: var(--cyan-neon); box-shadow: 0 0 15px var(--cyan-neon); }
 
-        .dashboard { flex: 1; padding: 40px; overflow-y: auto; z-index: 10; position: relative; }
-        .page { display: none; opacity: 0; transition: opacity 0.5s; }
+        .connection-box {
+            margin-top: auto; padding: 20px; border-top: 1px solid var(--glass-border);
+            font-size: 0.85rem; background: rgba(2, 6, 23, 0.4);
+        }
+
+        .connection-box input {
+            width: 100%; background: #0b1329; border: 1px solid var(--glass-border);
+            color: var(--cyan-neon); padding: 8px 12px; border-radius: 8px; font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem; margin-top: 8px; margin-bottom: 10px; outline: none;
+        }
+
+        .connection-box input:focus { border-color: var(--cyan-neon); box-shadow: 0 0 10px rgba(0,240,255,0.3); }
+
+        .connect-btn {
+            width: 100%; background: rgba(0, 240, 255, 0.15); border: 1px solid var(--cyan-neon);
+            color: var(--cyan-neon); padding: 9px; border-radius: 8px; font-weight: 700; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+
+        .connect-btn:hover { background: var(--cyan-neon); color: #020617; box-shadow: 0 0 15px var(--cyan-neon); }
+
+        .dashboard { flex: 1; padding: 30px 40px; overflow-y: auto; z-index: 10; position: relative; }
+        .page { display: none; opacity: 0; transition: opacity 0.4s; }
         .page.active { display: block; opacity: 1; }
 
-        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
-        .header-top h1 { margin: 0; font-weight: 300; font-size: 2rem; }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px; }
+        .header-top h1 { margin: 0; font-weight: 300; font-size: 1.9rem; }
         .header-top h1 span { font-weight: 800; color: var(--cyan-neon); }
 
-        .live-status { display: flex; align-items: center; gap: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: var(--green-neon); background: rgba(16, 185, 129, 0.1); padding: 8px 16px; border-radius: 20px; border: 1px solid rgba(16, 185, 129, 0.3); }
-        .pulse-dot { width: 8px; height: 8px; background: var(--green-neon); border-radius: 50%; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); } }
+        .status-strip { display: flex; gap: 12px; align-items: center; }
 
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 25px; }
+        .live-status {
+            display: flex; align-items: center; gap: 10px; font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem; padding: 8px 16px; border-radius: 20px; transition: 0.3s;
+        }
 
-        .glass-card { background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border); border-radius: 16px; padding: 25px; position: relative; transition: transform 0.3s, box-shadow 0.3s; cursor: pointer; }
-        .glass-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0, 240, 255, 0.1); border-color: var(--cyan-neon); }
+        .status-sim { color: var(--amber-neon); background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.3); }
+        .status-live { color: var(--green-neon); background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.3); }
 
-        .card-icon { font-size: 2rem; color: var(--text-muted); margin-bottom: 20px; transition: 0.3s; }
+        .pulse-dot { width: 8px; height: 8px; border-radius: 50%; animation: pulse 1.5s infinite; }
+        .dot-sim { background: var(--amber-neon); }
+        .dot-live { background: var(--green-neon); }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 240, 255, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 240, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 240, 255, 0); }
+        }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+
+        .glass-card {
+            background: var(--glass-bg); backdrop-filter: blur(12px); border: 1px solid var(--glass-border);
+            border-radius: 16px; padding: 22px; position: relative; transition: transform 0.3s, box-shadow 0.3s;
+        }
+        .glass-card:hover { transform: translateY(-4px); box-shadow: 0 10px 30px rgba(0, 240, 255, 0.1); border-color: var(--cyan-neon); }
+
+        .card-icon { font-size: 1.8rem; color: var(--text-muted); margin-bottom: 16px; transition: 0.3s; }
         .glass-card:hover .card-icon { color: var(--cyan-neon); text-shadow: 0 0 15px var(--cyan-neon); }
 
-        .card-title { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 10px; }
-        .data-value { font-family: 'JetBrains Mono', monospace; font-size: 2.5rem; font-weight: 700; color: var(--text-main); transition: color 0.3s; }
-        .data-unit { font-size: 1rem; color: var(--text-muted); font-weight: 400; }
+        .card-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-muted); margin-bottom: 8px; }
+        .data-value { font-family: 'JetBrains Mono', monospace; font-size: 2.3rem; font-weight: 700; color: var(--text-main); transition: color 0.3s; }
+        .data-unit { font-size: 0.95rem; color: var(--text-muted); font-weight: 400; }
 
-        .compass-wrapper { position: absolute; top: 25px; right: 25px; width: 50px; height: 50px; border: 2px solid var(--glass-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
-        .compass-arrow { color: var(--coral-neon); font-size: 1.5rem; transition: transform 1s cubic-bezier(0.4, 2.5, 0.2, 1); }
+        .compass-wrapper { position: absolute; top: 22px; right: 22px; width: 48px; height: 48px; border: 2px solid var(--glass-border); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .compass-arrow { color: var(--coral-neon); font-size: 1.4rem; transition: transform 0.8s cubic-bezier(0.4, 2.5, 0.2, 1); }
 
         @keyframes dataUpdate { 0% { color: var(--cyan-neon); text-shadow: 0 0 10px var(--cyan-neon); } 100% { color: var(--text-main); text-shadow: none; } }
-        .updated { animation: dataUpdate 1s ease-out; }
+        .updated { animation: dataUpdate 0.8s ease-out; }
 
-        .chart-panel { grid-column: 1 / -1; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px; padding: 30px; margin-top: 25px; height: 400px; }
+        /* Camera Feed Panel */
+        .video-panel {
+            grid-column: 1 / -1; display: grid; grid-template-columns: 2fr 1fr; gap: 20px;
+            background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 16px;
+            padding: 24px; margin-top: 20px;
+        }
+
+        .video-viewport {
+            background: #000; border-radius: 12px; overflow: hidden; position: relative;
+            min-height: 340px; display: flex; align-items: center; justify-content: center;
+            border: 1px solid rgba(0, 240, 255, 0.25);
+        }
+
+        .video-viewport img { width: 100%; height: 100%; object-fit: contain; max-height: 440px; display: block; }
+
+        .hud-overlay {
+            position: absolute; top: 12px; left: 14px; right: 14px; display: flex; justify-content: space-between;
+            font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; pointer-events: none;
+            color: var(--cyan-neon); text-shadow: 0 0 6px rgba(0,0,0,0.9);
+        }
+
+        .cam-controls {
+            display: flex; flex-direction: column; justify-content: space-between;
+        }
+
+        .cam-btn {
+            background: rgba(15, 23, 42, 0.8); border: 1px solid var(--glass-border); color: var(--text-main);
+            padding: 12px 16px; border-radius: 10px; font-weight: 600; cursor: pointer; transition: all 0.2s;
+            display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 0.9rem;
+        }
+        .cam-btn:hover { border-color: var(--cyan-neon); color: var(--cyan-neon); background: rgba(0, 240, 255, 0.1); }
+        .cam-btn.active-flash { background: rgba(255, 0, 85, 0.2); border-color: var(--coral-neon); color: var(--coral-neon); }
+
+        .chart-panel {
+            grid-column: 1 / -1; background: var(--glass-bg); border: 1px solid var(--glass-border);
+            border-radius: 16px; padding: 25px; margin-top: 20px; height: 320px;
+        }
     </style>
 </head>
 <body>
@@ -100,14 +177,29 @@
     <aside class="sidebar">
         <div class="brand"><i class="fa-solid fa-satellite-dish"></i> NEXUS</div>
         <button class="nav-btn active" onclick="switchTab('live', this)"><i class="fa-solid fa-layer-group"></i> Telemetry</button>
+        <button class="nav-btn" onclick="switchTab('camera', this)"><i class="fa-solid fa-video"></i> Optical Surveillance</button>
         <button class="nav-btn" onclick="switchTab('analytics', this)"><i class="fa-solid fa-chart-area"></i> Deep Analytics</button>
+
+        <div class="connection-box">
+            <div style="font-weight: 600; color: var(--cyan-neon);"><i class="fa-solid fa-wifi"></i> ESP32-CAM Node IP</div>
+            <input type="text" id="node-ip" value="192.168.4.1" placeholder="e.g. 192.168.4.1 or 192.168.1.105">
+            <button class="connect-btn" id="btn-toggle-link" onclick="toggleNodeConnection()">
+                <i class="fa-solid fa-link"></i> Link Node
+            </button>
+        </div>
     </aside>
 
     <main class="dashboard">
+        <!-- PAGE 1: TELEMETRY -->
         <div id="page-live" class="page active">
             <div class="header-top">
                 <h1>Ocean <span>Telemetry</span></h1>
-                <div class="live-status"><div class="pulse-dot"></div> SYNC: LIVE</div>
+                <div class="status-strip">
+                    <div id="badge-status" class="live-status status-sim">
+                        <div id="dot-status" class="pulse-dot dot-sim"></div>
+                        <span id="txt-status">MODE: SIMULATION</span>
+                    </div>
+                </div>
             </div>
 
             <div class="grid">
@@ -118,8 +210,8 @@
                 </div>
                 <div class="glass-card">
                     <i class="fa-solid fa-droplet card-icon"></i>
-                    <div class="card-title">Clarity (ADC)</div>
-                    <div class="data-value" id="val-turbidity">650<span class="data-unit"></span></div>
+                    <div class="card-title">Clarity (Turbidity)</div>
+                    <div class="data-value" id="val-turbidity">650<span class="data-unit"> ADC</span></div>
                 </div>
                 <div class="glass-card">
                     <i class="fa-solid fa-wind card-icon"></i>
@@ -137,16 +229,68 @@
                     <div class="compass-wrapper"><i id="compass-arrow" class="fa-solid fa-location-arrow compass-arrow" style="transform: rotate(185deg);"></i></div>
                 </div>
             </div>
+
+            <!-- Optical Video Feed Inlined in Live View -->
+            <div class="video-panel">
+                <div class="video-viewport">
+                    <div class="hud-overlay">
+                        <span><i class="fa-solid fa-crosshairs"></i> CAM-01 [OV2640]</span>
+                        <span id="hud-clock">00:00:00 UTC</span>
+                    </div>
+                    <img id="main-cam-stream" src="" alt="Awaiting Video Stream Link" onerror="handleStreamError(this)">
+                    <div id="cam-standby-msg" style="position: absolute; text-align: center; color: var(--text-muted);">
+                        <i class="fa-solid fa-video-slash" style="font-size: 2.5rem; margin-bottom: 12px; color: var(--coral-neon);"></i>
+                        <div>Optical Stream Standby</div>
+                        <div style="font-size: 0.8rem; margin-top: 6px; color: var(--text-muted);">Click "Link Node" or enter ESP32-CAM IP</div>
+                    </div>
+                </div>
+                <div class="cam-controls">
+                    <div>
+                        <div style="font-weight: 700; margin-bottom: 15px; color: var(--cyan-neon); letter-spacing: 1px;">OPTICAL CONTROLS</div>
+                        <button class="cam-btn" id="btn-flash" onclick="toggleFlashlight()">
+                            <i class="fa-solid fa-lightbulb"></i> <span id="txt-flash">Night Flashlight: OFF</span>
+                        </button>
+                        <button class="cam-btn" onclick="captureSnapshot()">
+                            <i class="fa-solid fa-camera"></i> Capture Still Frame
+                        </button>
+                        <button class="cam-btn" onclick="reloadStream()">
+                            <i class="fa-solid fa-rotate"></i> Reconnect Stream
+                        </button>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5; background: rgba(0,0,0,0.3); padding: 12px; border-radius: 8px;">
+                        <i class="fa-solid fa-info-circle" style="color: var(--cyan-neon);"></i>
+                        <strong>Default AP:</strong> Connect to WiFi <code>NEXUS-Ocean-Cam</code> and link IP <code>192.168.4.1</code>.
+                    </div>
+                </div>
+            </div>
             
             <div class="chart-panel"><canvas id="liveChart"></canvas></div>
         </div>
 
+        <!-- PAGE 2: OPTICAL SURVEILLANCE STANDALONE -->
+        <div id="page-camera" class="page">
+            <div class="header-top">
+                <h1>Optical <span>Surveillance</span></h1>
+            </div>
+            <div class="glass-card" style="padding: 20px;">
+                <div style="max-width: 800px; margin: 0 auto;">
+                    <div class="video-viewport" style="min-height: 480px;">
+                        <img id="full-cam-stream" src="" alt="Camera Stream" onerror="handleStreamError(this)">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAGE 3: HISTORICAL ANALYTICS -->
         <div id="page-analytics" class="page">
             <div class="header-top"><h1>Historical <span>Analytics</span></h1></div>
             <div class="glass-card" style="height: 60vh; display:flex; align-items:center; justify-content:center; color: var(--text-muted);">
                 <div style="text-align: center;">
-                    <i class="fa-solid fa-database" style="font-size: 3rem; margin-bottom: 20px;"></i>
-                    <h2>Firebase Connection Required</h2>
+                    <i class="fa-solid fa-database" style="font-size: 3rem; margin-bottom: 20px; color: var(--cyan-neon);"></i>
+                    <h2>Firebase Data Sync Ready</h2>
+                    <p style="max-width: 450px; margin: 15px auto; font-size: 0.95rem;">
+                        Connect your Firebase Realtime Database credentials to log historical ocean temperature, barometric cycles, and water clarity anomalies over time.
+                    </p>
                 </div>
             </div>
         </div>
@@ -160,9 +304,10 @@
             if(btnElement) btnElement.classList.add('active');
         }
 
+        // Live Chart Setup
         const ctx = document.getElementById('liveChart').getContext('2d');
-        let gradient = ctx.createLinearGradient(0, 0, 0, 400);
-        gradient.addColorStop(0, 'rgba(0, 240, 255, 0.4)');
+        let gradient = ctx.createLinearGradient(0, 0, 0, 300);
+        gradient.addColorStop(0, 'rgba(0, 240, 255, 0.35)');
         gradient.addColorStop(1, 'rgba(0, 240, 255, 0.0)');
 
         const liveChart = new Chart(ctx, {
@@ -170,43 +315,196 @@
             data: {
                 labels: ['-60s', '-50s', '-40s', '-30s', '-20s', '-10s', 'NOW'],
                 datasets: [{
-                    label: 'Water Temp Volatility',
+                    label: 'Water Temp Volatility (°C)',
                     data: [22.5, 22.5, 22.6, 22.4, 22.5, 22.5, 22.5],
                     borderColor: '#00f0ff', backgroundColor: gradient, borderWidth: 2,
                     pointBackgroundColor: '#020617', pointBorderColor: '#00f0ff', pointBorderWidth: 2,
                     pointRadius: 4, fill: true, tension: 0.4
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 21, max: 24 } } }
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { min: 20, max: 28 } } }
         });
+
+        // Telemetry State
+        let isLiveLinked = false;
+        let pollingInterval = null;
+        let simulationInterval = null;
+        let isFlashOn = false;
 
         let baseWaterTemp = 22.50, baseAirTemp = 24.10, baseHeading = 185, basePressure = 1013.2;
 
+        function updateElement(id, value, unit) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            el.innerHTML = value + '<span class="data-unit">' + unit + '</span>';
+            el.classList.remove('updated'); void el.offsetWidth; el.classList.add('updated');
+        }
+
+        function pushChartPoint(value) {
+            liveChart.data.datasets[0].data.shift();
+            liveChart.data.datasets[0].data.push(value);
+            liveChart.update('none');
+        }
+
+        // Simulation Loop (offline demo)
         function simulateHardwareData() {
+            if (isLiveLinked) return;
             let wTemp = (baseWaterTemp + (Math.random() * 0.2 - 0.1)).toFixed(2);
             let aTemp = (baseAirTemp + (Math.random() * 0.2 - 0.1)).toFixed(2);
             let press = (basePressure + (Math.random() * 0.4 - 0.2)).toFixed(1);
             let head = Math.floor(baseHeading + (Math.random() * 4 - 2));
+            let turb = Math.floor(640 + Math.random() * 20);
 
             updateElement('val-water', wTemp, '°C');
+            updateElement('val-turbidity', turb, ' ADC');
             updateElement('val-air', aTemp, '°C');
             updateElement('val-pressure', press, ' hPa');
             
             document.getElementById('val-heading').innerHTML = head + '<span class="data-unit">°</span>';
             document.getElementById('compass-arrow').style.transform = `rotate(${head}deg)`;
-
-            liveChart.data.datasets[0].data.shift();
-            liveChart.data.datasets[0].data.push(wTemp);
-            liveChart.update('none');
+            pushChartPoint(wTemp);
         }
 
-        function updateElement(id, value, unit) {
-            const el = document.getElementById(id);
-            el.innerHTML = value + '<span class="data-unit">' + unit + '</span>';
-            el.classList.remove('updated'); void el.offsetWidth; el.classList.add('updated');
+        simulationInterval = setInterval(simulateHardwareData, 2000);
+
+        // HUD Clock
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('hud-clock').innerText = now.toTimeString().split(' ')[0] + ' UTC';
+        }, 1000);
+
+        // ESP32-CAM Node Linker
+        function toggleNodeConnection() {
+            const ip = document.getElementById('node-ip').value.trim();
+            const btn = document.getElementById('btn-toggle-link');
+            const badge = document.getElementById('badge-status');
+            const dot = document.getElementById('dot-status');
+            const txt = document.getElementById('txt-status');
+
+            if (!isLiveLinked) {
+                // Connect
+                isLiveLinked = true;
+                btn.innerHTML = '<i class="fa-solid fa-unlink"></i> Unlink Node';
+                btn.style.borderColor = 'var(--coral-neon)';
+                btn.style.color = 'var(--coral-neon)';
+
+                badge.className = 'live-status status-live';
+                dot.className = 'pulse-dot dot-live';
+                txt.innerText = 'LINKED: ' + ip;
+
+                loadCameraStream(ip);
+                startTelemetryPolling(ip);
+            } else {
+                // Disconnect back to simulation
+                isLiveLinked = false;
+                btn.innerHTML = '<i class="fa-solid fa-link"></i> Link Node';
+                btn.style.borderColor = 'var(--cyan-neon)';
+                btn.style.color = 'var(--cyan-neon)';
+
+                badge.className = 'live-status status-sim';
+                dot.className = 'pulse-dot dot-sim';
+                txt.innerText = 'MODE: SIMULATION';
+
+                stopCameraStream();
+                if (pollingInterval) clearInterval(pollingInterval);
+            }
         }
 
-        setInterval(simulateHardwareData, 2000);
+        function loadCameraStream(ip) {
+            const streamUrl = `http://${ip}:81/stream`;
+            const mainCam = document.getElementById('main-cam-stream');
+            const fullCam = document.getElementById('full-cam-stream');
+            const standby = document.getElementById('cam-standby-msg');
+
+            mainCam.src = streamUrl;
+            fullCam.src = streamUrl;
+            mainCam.style.display = 'block';
+            standby.style.display = 'none';
+        }
+
+        function stopCameraStream() {
+            const mainCam = document.getElementById('main-cam-stream');
+            const fullCam = document.getElementById('full-cam-stream');
+            const standby = document.getElementById('cam-standby-msg');
+
+            mainCam.src = '';
+            fullCam.src = '';
+            mainCam.style.display = 'none';
+            standby.style.display = 'block';
+        }
+
+        function handleStreamError(imgEl) {
+            imgEl.style.display = 'none';
+            document.getElementById('cam-standby-msg').style.display = 'block';
+        }
+
+        function reloadStream() {
+            const ip = document.getElementById('node-ip').value.trim();
+            loadCameraStream(ip);
+        }
+
+        // Live Telemetry Polling over HTTP /telemetry
+        function startTelemetryPolling(ip) {
+            if (pollingInterval) clearInterval(pollingInterval);
+
+            const fetchTelemetry = async () => {
+                try {
+                    const res = await fetch(`http://${ip}/telemetry`, { mode: 'cors' });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const data = await res.json();
+
+                    updateElement('val-water', data.waterTemp.toFixed(2), '°C');
+                    updateElement('val-turbidity', data.turbidity, ' ADC');
+                    updateElement('val-air', data.airTemp.toFixed(2), '°C');
+                    updateElement('val-pressure', data.pressure.toFixed(1), ' hPa');
+                    
+                    document.getElementById('val-heading').innerHTML = Math.round(data.heading) + '<span class="data-unit">°</span>';
+                    document.getElementById('compass-arrow').style.transform = `rotate(${data.heading}deg)`;
+                    pushChartPoint(data.waterTemp);
+
+                    if (data.flashState !== undefined) {
+                        isFlashOn = data.flashState;
+                        updateFlashUI();
+                    }
+                } catch (e) {
+                    console.warn('[Telemetry Link] Awaiting packet:', e.message);
+                }
+            };
+
+            fetchTelemetry();
+            pollingInterval = setInterval(fetchTelemetry, 1500);
+        }
+
+        // Flashlight / Night Vision Control
+        async function toggleFlashlight() {
+            const ip = document.getElementById('node-ip').value.trim();
+            const targetState = isFlashOn ? 'off' : 'on';
+            try {
+                await fetch(`http://${ip}/flash?state=${targetState}`, { mode: 'cors' });
+                isFlashOn = !isFlashOn;
+                updateFlashUI();
+            } catch (e) {
+                alert('Could not reach ESP32-CAM at http://' + ip + ' to toggle flash.');
+            }
+        }
+
+        function updateFlashUI() {
+            const btn = document.getElementById('btn-flash');
+            const txt = document.getElementById('txt-flash');
+            if (isFlashOn) {
+                btn.classList.add('active-flash');
+                txt.innerText = 'Night Flashlight: ON';
+            } else {
+                btn.classList.remove('active-flash');
+                txt.innerText = 'Night Flashlight: OFF';
+            }
+        }
+
+        // Snapshot Download
+        function captureSnapshot() {
+            const ip = document.getElementById('node-ip').value.trim();
+            window.open(`http://${ip}/capture`, '_blank');
+        }
     </script>
 </body>
 </html>
