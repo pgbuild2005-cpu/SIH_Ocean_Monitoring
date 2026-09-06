@@ -6,6 +6,8 @@ A comprehensive marine monitoring telemetry and analytics dashboard combining Ar
 
 ## 1. Hardware Wiring Guide
 
+> 📖 **Full Schematic & Visual Diagram**: For the complete schematic, Mermaid flowcharts, and voltage divider calculations, see [CIRCUIT_DIAGRAM.md](file:///home/pg_build/Downloads/SIH/CIRCUIT_DIAGRAM.md).
+
 ### Power Distribution
 * **Common Ground**: Connect Arduino GND, External 5V Power GND, and ESP32-CAM GND to a shared ground rail.
 * **Arduino Power**: 5V via USB or 7-12V barrel jack / VIN.
@@ -30,7 +32,8 @@ A comprehensive marine monitoring telemetry and analytics dashboard combining Ar
 ## 2. Directory Structure
 
 ```
-├── README.md                                    # System wiring, architecture & usage instructions
+├── README.md                                    # System overview & quick guide
+├── CIRCUIT_DIAGRAM.md                           # Detailed pin-to-pin wiring schematics & circuit diagrams
 ├── index.html                                   # NEXUS real-time glassmorphic telemetry & video dashboard
 ├── arduino/
 │   └── ocean_sensor_node/
